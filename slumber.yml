@@ -1,0 +1,186 @@
+# For basic usage info, see:
+# https://slumber.lucaspickering.me/getting_started.html
+# For all collection options, see:
+# https://slumber.lucaspickering.me/api/request_collection/index.html
+
+name: My Collection
+
+# Profiles are groups of data you can easily switch between. A common usage is
+# to define profiles for various environments of a REST service
+profiles:
+  local:
+    name: Local development
+    data:
+      host: http://localhost:8000
+      keycloak_realm: dev
+      BASE_URL: "{{ host }}/connector/api/v1"
+      TENANT_BASE_URL: "{{ BASE_URL }}/{{ env('TEST_ORGANIZATION_ID') }}/fhir/R4"
+
+requests:
+  token_request:
+    name: Token request
+    method: POST
+    url: "{{ env('KEYCLOAK_URL') }}/{{ keycloak_realm }}/protocol/openid-connect/token"
+    body:
+      type: form_urlencoded
+      data:
+        grant_type: client_credentials
+        client_id: "{{ env('TEST_CLIENT_ID') }}"
+        client_secret: "{{ env('TEST_CLIENT_SECRET') }}"
+
+  test_request:
+    name: Search patient
+    method: GET
+    url: "{{host}}/connector/api/v1/fhir/STU3/Organization/cb46bfdd-512a-4b49-b329-0219293d2424/Patient"
+    authentication:
+      type: bearer
+      token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
+    query:
+      identifier: http://fhir.nl/fhir/NamingSystem/bsn|123456782
+
+  appointments-folder:
+    name: Appointments
+    requests:
+      appointment-types:
+        name: Get appointment types
+        method: GET
+        url: "{{ TENANT_BASE_URL }}/ValueSet/BookableAppointmentType"
+        authentication:
+          type: bearer
+          token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
+      retrieve-schedules:
+        name: Search available Schedules
+        method: GET
+        url: "{{ TENANT_BASE_URL }}/Schedule"
+        authentication:
+          type: bearer
+          token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
+        query:
+          service-category: "http://www.medikit.nl/ns/cs/communication-type|DC"
+          date:
+            - "{{ prompt(message='Date to look for schedules') }}"
+            - "ge{{ command(['date', '-v', '+1d', '+%Y-%m-%d']) | trim() }}"
+            - "le{{ command(['date', '-v', '+4d', '+%Y-%m-%d']) | trim() }}"
+      retrieve-slots:
+        name: Search open Slots
+        method: GET
+        url: "{{ TENANT_BASE_URL }}/Slot"
+        authentication:
+          type: bearer
+          token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
+        query:
+          service-category: "http://www.medikit.nl/ns/cs/communication-type|DC"
+          schedule: "{{ prompt(message='Enter the schedule ID for which to retrieve Slots') }}"
+          start:
+            - "{{ prompt(message='Date to look for slots') }}"
+            - "ge{{ command(['date', '-v', '+1d', '+%Y-%m-%d']) | trim() }}"
+            - "le{{ command(['date', '-v', '+4d', '+%Y-%m-%d']) | trim() }}"
+      new-appointment:
+        name: Schedule a new appointment
+        method: POST
+        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('TEST_PATIENT_ID') }}/Appointment/$create"
+        authentication:
+          type: bearer
+          token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
+        body:
+          type: json
+          data:
+            resourceType: Parameters
+            parameter:
+              - name: start
+                valueDateTime: "{{ prompt(message='Enter the datetime for the appointment') }}"
+              - name: schedule
+                valueReference:
+                  reference: "Schedule/{{ prompt(message='Enter the ID for a Schedule') }}"
+              - name: create-as-approved
+                valueBoolean: "{{ select([0, 1], message='Should the appointment be created as `approved`?') | boolean() }}"
+              - name: comment
+                valueString: "{{ prompt(message='Enter a comment for the Appointment') }}"
+              
+
+  e-consults-folder:
+    name: E-Consultations
+    requests:
+      new-econsult:
+        name: Start new conversation
+        method: POST
+        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('TEST_PATIENT_ID') }}/Communication/$new-econsult"
+        authentication:
+          type: bearer
+          token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
+        body:
+          type: json
+          data:
+            resourceType: Parameters
+            parameter:
+              - name: message
+                valueString: "{{ prompt(message='Enter the body for an E-Consultation question') }}"
+              - name: conversation-identifier
+                valueIdentifier:
+                  system: http://fhir.nl/fhir/NamingSystem/big
+                  value: "{{ command(['uuidgen']) | trim() }}"
+      add-to-econsult:
+        name: Add message to existing conversation
+        method: POST
+        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('TEST_PATIENT_ID') }}/Communication/$new-econsult"
+        authentication:
+          type: bearer
+          token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
+        body:
+          type: json
+          data:
+            resourceType: Parameters
+            parameter:
+              - name: message
+                valueString: "{{ prompt(message='Enter the body for an E-Consultation question') }}"
+              - name: conversation-identifier
+                valueIdentifier:
+                  system: http://fhir.nl/fhir/NamingSystem/big
+                  value: "{{ prompt(message='Enter the identifier value for the existing conversation') }}"
+      retrieve-econsults:
+        name: Retrieve E-Consultations
+        method: GET
+        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('TEST_PATIENT_ID') }}/Communication"
+        authentication:
+          type: bearer
+          token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
+        query:
+          encounter:identifier: "http://fhir.nl/fhir/NamingSystem/big|{{ prompt(message='Identifier value for existing conversation') }}"
+          encounter:Encounter.code: "https://referentiemodel.nhg.org/tabellen/nhg-tabel-14-contactwijze|12"
+          encounter.code: "https://referentiemodel.nhg.org/tabellen/nhg-tabel-14-contactwijze|12"
+          encounter: "Encounter/{{ prompt(message='ID for the conversation Encounter') }}"
+
+
+  repeat-prescription-folder:
+    name: Repeat Prescription
+    requests:
+      get-prescriptions:
+        name: Get prescriptions
+        method: GET
+        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('TEST_PATIENT_ID') }}/MedicationRequest"
+        query:
+          _profile: https://meditools.nl/fhir/StructureDefinition/PatientRepeatablePrescription
+          code: "urn:oid:2.16.840.1.113883.2.4.4.10|20176"
+          date: "ge{{ prompt(message='From which date do you want to search for prescriptions?') }}"
+          status: "active,completed"
+        authentication:
+          type: bearer
+          token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
+      repeat-prescription:
+        name: Repeat prescription
+        method: POST
+        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('TEST_PATIENT_ID') }}/MedicationRequest/{{ prompt(message='Enter the ID for the prescription to repeat') }}/$renew-by-patient"
+        body:
+          type: json
+          data:
+            resourceType: Parameters
+            parameter:
+              - name: effective-period
+                valuePeriod:
+                  start: "{{ prompt(message='Enter the start date for the effective period') }}"
+                  end: "{{ prompt(message='Enter the end date for the effective period') }}"
+              - name: comment
+                valueString: "{{ prompt(message='Enter a comment for the prescription') }}"
+        authentication:
+          type: bearer
+          token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
