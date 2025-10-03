@@ -137,14 +137,14 @@ requests:
         url: "{{ TENANT_BASE_URL }}/fhir/R4/ValueSet/BookableAppointmentType"
         authentication:
           type: bearer
-          token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
+          token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
       retrieve-schedules:
         name: Search available Schedules
         method: GET
         url: "{{ TENANT_BASE_URL }}/fhir/R4/Schedule"
         authentication:
           type: bearer
-          token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
+          token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
         query:
           service-category: "http://www.medikit.nl/ns/cs/communication-type|DC"
           date:
@@ -157,7 +157,7 @@ requests:
         url: "{{ TENANT_BASE_URL }}/fhir/R4/Slot"
         authentication:
           type: bearer
-          token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
+          token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
         query:
           service-category: "http://www.medikit.nl/ns/cs/communication-type|DC"
           schedule: "{{ prompt(message='Enter the schedule ID for which to retrieve Slots') }}"
@@ -171,7 +171,7 @@ requests:
         url: "{{ TENANT_BASE_URL }}/fhir/R4/Patient/{{ env('PATIENT_ID') }}/Appointment/$create"
         authentication:
           type: bearer
-          token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
+          token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
         body:
           type: json
           data:
@@ -197,7 +197,7 @@ requests:
         url: "{{ TENANT_BASE_URL }}/fhir/R4/Patient/{{ env('PATIENT_ID') }}/Communication/$new-econsult"
         authentication:
           type: bearer
-          token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
+          token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
         body:
           type: json
           data:
@@ -215,7 +215,7 @@ requests:
         url: "{{ TENANT_BASE_URL }}/fhir/R4/Patient/{{ env('PATIENT_ID') }}/Communication/$new-econsult"
         authentication:
           type: bearer
-          token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
+          token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
         body:
           type: json
           data:
@@ -233,7 +233,7 @@ requests:
         url: "{{ TENANT_BASE_URL }}/fhir/R4/Patient/{{ env('PATIENT_ID') }}/Communication"
         authentication:
           type: bearer
-          token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
+          token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
         query:
           encounter:identifier: "http://fhir.nl/fhir/NamingSystem/big|{{ prompt(message='Identifier value for existing conversation') }}"
           encounter:Encounter.code: "https://referentiemodel.nhg.org/tabellen/nhg-tabel-14-contactwijze|12"
@@ -255,7 +255,7 @@ requests:
           status: "active,completed"
         authentication:
           type: bearer
-          token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
+          token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
       repeat-prescription:
         name: Repeat prescription
         method: POST
@@ -273,4 +273,4 @@ requests:
                 valueString: "{{ prompt(message='Enter a comment for the prescription') }}"
         authentication:
           type: bearer
-          token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
+          token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
