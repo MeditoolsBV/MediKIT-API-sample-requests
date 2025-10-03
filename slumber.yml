@@ -3,7 +3,7 @@
 # For all collection options, see:
 # https://slumber.lucaspickering.me/api/request_collection/index.html
 
-name: My Collection
+name: MediKIT API Sample Requests
 
 # Profiles are groups of data you can easily switch between. A common usage is
 # to define profiles for various environments of a REST service
@@ -12,31 +12,11 @@ profiles:
     name: Local development
     data:
       host: http://localhost:8000
-      keycloak_realm: dev
       BASE_URL: "{{ host }}/connector/api/v1"
-      TENANT_BASE_URL: "{{ BASE_URL }}/{{ env('TEST_ORGANIZATION_ID') }}/fhir/R4"
+      TENANT_BASE_URL: "{{ BASE_URL }}/{{ env('ORGANIZATION_ID') }}/fhir/R4"
 
 requests:
-  token_request:
-    name: Token request
-    method: POST
-    url: "{{ env('KEYCLOAK_URL') }}/{{ keycloak_realm }}/protocol/openid-connect/token"
-    body:
-      type: form_urlencoded
-      data:
-        grant_type: client_credentials
-        client_id: "{{ env('TEST_CLIENT_ID') }}"
-        client_secret: "{{ env('TEST_CLIENT_SECRET') }}"
 
-  test_request:
-    name: Search patient
-    method: GET
-    url: "{{host}}/connector/api/v1/fhir/STU3/Organization/cb46bfdd-512a-4b49-b329-0219293d2424/Patient"
-    authentication:
-      type: bearer
-      token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
-    query:
-      identifier: http://fhir.nl/fhir/NamingSystem/bsn|123456782
 
   appointments-folder:
     name: Appointments
@@ -78,7 +58,7 @@ requests:
       new-appointment:
         name: Schedule a new appointment
         method: POST
-        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('TEST_PATIENT_ID') }}/Appointment/$create"
+        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('PATIENT_ID') }}/Appointment/$create"
         authentication:
           type: bearer
           token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
@@ -104,7 +84,7 @@ requests:
       new-econsult:
         name: Start new conversation
         method: POST
-        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('TEST_PATIENT_ID') }}/Communication/$new-econsult"
+        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('PATIENT_ID') }}/Communication/$new-econsult"
         authentication:
           type: bearer
           token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
@@ -122,7 +102,7 @@ requests:
       add-to-econsult:
         name: Add message to existing conversation
         method: POST
-        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('TEST_PATIENT_ID') }}/Communication/$new-econsult"
+        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('PATIENT_ID') }}/Communication/$new-econsult"
         authentication:
           type: bearer
           token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
@@ -140,7 +120,7 @@ requests:
       retrieve-econsults:
         name: Retrieve E-Consultations
         method: GET
-        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('TEST_PATIENT_ID') }}/Communication"
+        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('PATIENT_ID') }}/Communication"
         authentication:
           type: bearer
           token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
@@ -157,7 +137,7 @@ requests:
       get-prescriptions:
         name: Get prescriptions
         method: GET
-        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('TEST_PATIENT_ID') }}/MedicationRequest"
+        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('PATIENT_ID') }}/MedicationRequest"
         query:
           _profile: https://meditools.nl/fhir/StructureDefinition/PatientRepeatablePrescription
           code: "urn:oid:2.16.840.1.113883.2.4.4.10|20176"
@@ -169,7 +149,7 @@ requests:
       repeat-prescription:
         name: Repeat prescription
         method: POST
-        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('TEST_PATIENT_ID') }}/MedicationRequest/{{ prompt(message='Enter the ID for the prescription to repeat') }}/$renew-by-patient"
+        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('PATIENT_ID') }}/MedicationRequest/{{ prompt(message='Enter the ID for the prescription to repeat') }}/$renew-by-patient"
         body:
           type: json
           data:
