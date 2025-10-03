@@ -38,6 +38,26 @@ requests:
           type: bearer
           token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
 
+      search-practitioner-roles:
+        name: Search practitioner roles
+        method: GET
+        url: "{{ TENANT_BASE_URL }}/fhir/R4/PractitionerRole"
+        query:
+          specialty: "urn:oid:2.16.840.1.113883.2.4.6.7|{{ prompt(message='Enter the specialty for the practitioner (e.g. 0100)') }}"
+          identifier: "http://fhir.nl/fhir/NamingSystem/agb-z|{{ prompt(message='Enter the AGB-Z for the practitioner') }}"
+          _include: "PractitionerRole:practitioner"
+        authentication:
+          type: bearer
+          token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
+
+      get-practitioner-role:
+        name: Get practitioner role
+        method: GET
+        url: "{{ TENANT_BASE_URL }}/fhir/R4/PractitionerRole/{{ prompt(message='Enter the ID for the practitioner role') }}"
+        authentication:
+          type: bearer
+          token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
+
   appointments-folder:
     name: Appointments
     requests:
