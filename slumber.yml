@@ -16,7 +16,27 @@ profiles:
       TENANT_BASE_URL: "{{ BASE_URL }}/{{ env('ORGANIZATION_ID') }}/fhir/R4"
 
 requests:
+  metadata-folder:
+    name: Metadata
+    requests:
 
+      search-patients:
+        name: Search patients
+        method: GET
+        url: "{{ TENANT_BASE_URL }}/Patient"
+        query:
+          identifier: http://fhir.nl/fhir/NamingSystem/bsn|{{ prompt(message='Enter the BSN for the patient') }}
+        authentication:
+          type: bearer
+          token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
+
+      get-patient:
+        name: Get patient
+        method: GET
+        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('PATIENT_ID') }}"
+        authentication:
+          type: bearer
+          token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
 
   appointments-folder:
     name: Appointments
