@@ -57,6 +57,76 @@ requests:
         authentication:
           type: bearer
           token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
+  
+  medical-record-folder:
+    name: Medical Record
+    requests:
+
+      search-episodes:
+        name: Search episodes
+        method: GET
+        url: "{{ TENANT_BASE_URL }}/fhir/R4/Patient/{{ env('PATIENT_ID') }}/EpisodeOfCare"
+        query:
+          _include: "EpisodeOfCare:condition"
+          status: active
+        authentication:
+          type: bearer
+          token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
+
+      get-episode:
+        name: Get episode
+        method: GET
+        url: "{{ TENANT_BASE_URL }}/fhir/R4/Patient/{{ env('PATIENT_ID') }}/EpisodeOfCare/{{ prompt(message='Enter the ID for the episode') }}"
+        authentication:
+          type: bearer
+          token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
+
+      search-allergies:
+        name: Search allergies
+        method: GET
+        url: "{{ TENANT_BASE_URL }}/fhir/R4/Patient/{{ env('PATIENT_ID') }}/AllergyIntolerance"
+        query:
+          clinical-status: active
+        authentication:
+          type: bearer
+          token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
+
+      get-allergy:
+        name: Get allergy
+        method: GET
+        url: "{{ TENANT_BASE_URL }}/fhir/R4/Patient/{{ env('PATIENT_ID') }}/AllergyIntolerance/{{ prompt(message='Enter the ID for the allergy') }}"
+        authentication:
+          type: bearer
+          token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
+
+      search-contraindications:
+        name: Search contraindications
+        method: GET
+        url: "{{ TENANT_BASE_URL }}/fhir/R4/Patient/{{ env('PATIENT_ID') }}/Flag"
+        query:
+          status: active
+          category: "http://loinc.org|75323-6"
+        authentication:
+          type: bearer
+          token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
+
+      get-flag:
+        name: Get contraindication
+        method: GET
+        url: "{{ TENANT_BASE_URL }}/fhir/R4/Patient/{{ env('PATIENT_ID') }}/Flag/{{ prompt(message='Enter the ID for the flag') }}"
+        authentication:
+          type: bearer
+          token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
+
+      search-soap:
+        name: Search SOAP notes
+        method: GET
+        url: "{{ TENANT_BASE_URL }}/fhir/STU3/Patient/{{ env('PATIENT_ID') }}/Composition"
+        query:
+          code: "http://loinc.org|67781-5"
+        authentication:
+          type: bearer
+          token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
 
   appointments-folder:
     name: Appointments
