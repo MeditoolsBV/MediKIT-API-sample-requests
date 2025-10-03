@@ -13,7 +13,7 @@ profiles:
     data:
       host: http://localhost:8000
       BASE_URL: "{{ host }}/connector/api/v1"
-      TENANT_BASE_URL: "{{ BASE_URL }}/{{ env('ORGANIZATION_ID') }}/fhir/R4"
+      TENANT_BASE_URL: "{{ BASE_URL }}/{{ env('ORGANIZATION_ID') }}"
 
 requests:
   metadata-folder:
@@ -23,7 +23,7 @@ requests:
       search-patients:
         name: Search patients
         method: GET
-        url: "{{ TENANT_BASE_URL }}/Patient"
+        url: "{{ TENANT_BASE_URL }}/fhir/R4/Patient"
         query:
           identifier: http://fhir.nl/fhir/NamingSystem/bsn|{{ prompt(message='Enter the BSN for the patient') }}
         authentication:
@@ -33,7 +33,7 @@ requests:
       get-patient:
         name: Get patient
         method: GET
-        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('PATIENT_ID') }}"
+        url: "{{ TENANT_BASE_URL }}/fhir/R4/Patient/{{ env('PATIENT_ID') }}"
         authentication:
           type: bearer
           token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
@@ -44,14 +44,14 @@ requests:
       appointment-types:
         name: Get appointment types
         method: GET
-        url: "{{ TENANT_BASE_URL }}/ValueSet/BookableAppointmentType"
+        url: "{{ TENANT_BASE_URL }}/fhir/R4/ValueSet/BookableAppointmentType"
         authentication:
           type: bearer
           token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
       retrieve-schedules:
         name: Search available Schedules
         method: GET
-        url: "{{ TENANT_BASE_URL }}/Schedule"
+        url: "{{ TENANT_BASE_URL }}/fhir/R4/Schedule"
         authentication:
           type: bearer
           token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
@@ -64,7 +64,7 @@ requests:
       retrieve-slots:
         name: Search open Slots
         method: GET
-        url: "{{ TENANT_BASE_URL }}/Slot"
+        url: "{{ TENANT_BASE_URL }}/fhir/R4/Slot"
         authentication:
           type: bearer
           token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
@@ -78,7 +78,7 @@ requests:
       new-appointment:
         name: Schedule a new appointment
         method: POST
-        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('PATIENT_ID') }}/Appointment/$create"
+        url: "{{ TENANT_BASE_URL }}/fhir/R4/Patient/{{ env('PATIENT_ID') }}/Appointment/$create"
         authentication:
           type: bearer
           token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
@@ -104,7 +104,7 @@ requests:
       new-econsult:
         name: Start new conversation
         method: POST
-        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('PATIENT_ID') }}/Communication/$new-econsult"
+        url: "{{ TENANT_BASE_URL }}/fhir/R4/Patient/{{ env('PATIENT_ID') }}/Communication/$new-econsult"
         authentication:
           type: bearer
           token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
@@ -122,7 +122,7 @@ requests:
       add-to-econsult:
         name: Add message to existing conversation
         method: POST
-        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('PATIENT_ID') }}/Communication/$new-econsult"
+        url: "{{ TENANT_BASE_URL }}/fhir/R4/Patient/{{ env('PATIENT_ID') }}/Communication/$new-econsult"
         authentication:
           type: bearer
           token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
@@ -140,7 +140,7 @@ requests:
       retrieve-econsults:
         name: Retrieve E-Consultations
         method: GET
-        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('PATIENT_ID') }}/Communication"
+        url: "{{ TENANT_BASE_URL }}/fhir/R4/Patient/{{ env('PATIENT_ID') }}/Communication"
         authentication:
           type: bearer
           token: "{{ response('token_request', trigger='12h') | jsonpath('$.access_token') | sensitive() }}"
@@ -157,7 +157,7 @@ requests:
       get-prescriptions:
         name: Get prescriptions
         method: GET
-        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('PATIENT_ID') }}/MedicationRequest"
+        url: "{{ TENANT_BASE_URL }}/fhir/R4/Patient/{{ env('PATIENT_ID') }}/MedicationRequest"
         query:
           _profile: https://meditools.nl/fhir/StructureDefinition/PatientRepeatablePrescription
           code: "urn:oid:2.16.840.1.113883.2.4.4.10|20176"
@@ -169,7 +169,7 @@ requests:
       repeat-prescription:
         name: Repeat prescription
         method: POST
-        url: "{{ TENANT_BASE_URL }}/Patient/{{ env('PATIENT_ID') }}/MedicationRequest/{{ prompt(message='Enter the ID for the prescription to repeat') }}/$renew-by-patient"
+        url: "{{ TENANT_BASE_URL }}/fhir/R4/Patient/{{ env('PATIENT_ID') }}/MedicationRequest/{{ prompt(message='Enter the ID for the prescription to repeat') }}/$renew-by-patient"
         body:
           type: json
           data:
