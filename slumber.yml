@@ -11,7 +11,7 @@ profiles:
   local:
     name: Local development
     data:
-      host: https://dev.api.medikit.nl
+      host: https://dev-api.medikit.nl
       BASE_URL: "{{ host }}/connector/api/v1"
       TENANT_BASE_URL: "{{ BASE_URL }}/{{ env('ORGANIZATION_ID') }}"
 
