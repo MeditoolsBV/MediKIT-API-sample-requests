@@ -205,8 +205,14 @@ requests:
                 valueBoolean: "{{ select([0, 1], message='Should the appointment be created as `approved`?') | boolean() }}"
               - name: comment
                 valueString: "{{ prompt(message='Enter a comment for the Appointment') }}"
+      retrieve-appointments:
+        name: Retrieve appointments
+        method: GET
+        url: "{{ TENANT_BASE_URL }}/fhir/R4/Patient/{{ env('PATIENT_ID') }}/Appointment"
+        authentication:
+          type: bearer
+          token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
               
-
   e-consults-folder:
     name: E-Consultations
     requests:
