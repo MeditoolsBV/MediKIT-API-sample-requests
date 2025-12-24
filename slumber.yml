@@ -128,6 +128,25 @@ requests:
           type: bearer
           token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
 
+      search-encounters:
+        name: Search encounters
+        method: GET
+        url: "{{ TENANT_BASE_URL }}/fhir/R4/Patient/{{ env('PATIENT_ID') }}/Encounter"
+        query:
+          type: "https://referentiemodel.nhg.org/tabellen/nhg-tabel-14-contactwijze|03"
+          date: "ge{{ prompt(message='From which date do you want to search for encounters?') }}"
+        authentication:
+          type: bearer
+          token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
+
+      get-encounter:
+        name: Get encounter
+        method: GET
+        url: "{{ TENANT_BASE_URL }}/fhir/R4/Patient/{{ env('PATIENT_ID') }}/Encounter/{{ prompt(message='Enter the ID for the encounter') }}"
+        authentication:
+          type: bearer
+          token: "{{ command(['python', 'request_token.py']) | trim() | sensitive() }}"
+
   appointments-folder:
     name: Appointments
     requests:
